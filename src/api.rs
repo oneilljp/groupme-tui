@@ -102,7 +102,6 @@ pub fn get_messages(app: &mut App<'static>, dm: bool) -> Result<(), Box<dyn Erro
             "https://api.groupme.com/v3/direct_messages?other_user_id={}&token={}",
             app.dm_id, app.secret
         )
-        
     } else {
         format!(
             "https://api.groupme.com/v3/groups/{}/messages?token={}&limit=100",

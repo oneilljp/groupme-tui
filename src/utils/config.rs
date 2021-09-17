@@ -22,27 +22,27 @@ impl Default for Config {
 #[cfg(target_os = "linux")]
 fn config_dir() -> Option<PathBuf> {
     let mut conf_dir = dirs::config_dir().unwrap();
-    conf_dir.push("rustme");
+    conf_dir.push("groupme-tui");
     Some(conf_dir)
 }
 
 #[cfg(target_os = "macos")]
 fn config_dir() -> Option<PathBuf> {
     let mut conf_dir = dirs::config_dir().unwrap();
-    conf_dir.push("Rustme");
+    conf_dir.push("Groupme-tui");
     Some(conf_dir)
 }
 
 #[cfg(target_os = "windows")]
 fn config_dir() -> Option<PathBuf> {
     let mut conf_dir = dirs::config_dir().unwrap();
-    conf_dir.push("Rustme");
+    conf_dir.push("Groupme-tui");
     Some(conf_dir)
 }
 
 // Returns Config Struct Based on config file, creating one when necessary
 pub fn get_configs() -> Option<Config> {
-    let mut conf_dir = match env::var("RME_CONFIG") {
+    let mut conf_dir = match env::var("GMTUI_CONFIG") {
         Ok(dir) => PathBuf::from(dir),
         Err(_) => config_dir().unwrap(),
     };

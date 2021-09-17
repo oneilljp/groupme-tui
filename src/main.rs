@@ -10,28 +10,23 @@ mod utils;
 use std::error::Error;
 use std::io;
 use std::sync::mpsc;
-// use std::thread;
+use std::thread;
 
 use crossterm::{
     execute,
     terminal::{EnterAlternateScreen, LeaveAlternateScreen},
 };
 
-use tui::{
-    backend::CrosstermBackend,
-    Terminal,
-};
+use tui::{backend::CrosstermBackend, Terminal};
 
 use app::*;
-use input::*;
 use draw::*;
-// use listener::listener;
-
-
+use input::*;
+use listener::listener;
 
 fn main() -> Result<(), Box<dyn Error>> {
     let config = utils::config::get_configs().unwrap();
-    let (tx, _rx) = mpsc::channel();
+    let (tx, rx) = mpsc::channel();
 
     let stdout = io::stdout();
     let backend = CrosstermBackend::new(stdout);
@@ -41,9 +36,9 @@ fn main() -> Result<(), Box<dyn Error>> {
     let t_width: u16 = (terminal.size().unwrap().width as f64 * 0.98 * 0.75) as u16;
 
     let mut app = App::new(config.secret.to_string(), t_width);
-    //let user_id = app.user_id.clone();
+    let user_id = app.user_id.clone();
 
-    //let notify_thread = thread::spawn(move || listener(rx, &user_id, &config.secret));
+    let notify_thread = thread::spawn(move || listener(rx, &user_id, &config.secret));
 
     crossterm::terminal::enable_raw_mode()?;
     loop {
@@ -55,8 +50,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     // Send shutdown to listener
     tx.send(true).unwrap();
-    //notify_thread.join().unwrap();
-    // Do a wait here for the thread
+    notify_thread.join().unwrap();
 
     // Restore terminal state before exiting
     crossterm::terminal::disable_raw_mode()?;

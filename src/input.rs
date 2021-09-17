@@ -56,8 +56,7 @@ pub fn poll_input<B: Backend>(app: &mut App<'static>, terminal: &mut Terminal<B>
                                 || event.code == KeyCode::Right
                             {
                                 // Clear input for new group
-                                if app.dm_id
-                                    != app.dms.items[app.dms.state.selected().unwrap()].id
+                                if app.dm_id != app.dms.items[app.dms.state.selected().unwrap()].id
                                 {
                                     app.input.clear();
                                     app.input.push('▏');
@@ -90,7 +89,11 @@ pub fn poll_input<B: Backend>(app: &mut App<'static>, terminal: &mut Terminal<B>
                                 || event.code == KeyCode::Left
                                 || event.code == KeyCode::Esc
                             {
-                                app.mode = if app.dm { Modes::DirectNav } else { Modes::GroupNav };
+                                app.mode = if app.dm {
+                                    Modes::DirectNav
+                                } else {
+                                    Modes::GroupNav
+                                };
                             } else if event.code == KeyCode::Char('j')
                                 || event.code == KeyCode::Down
                             {
