@@ -189,7 +189,7 @@ pub fn send_message(
 ) -> Result<(), Box<dyn Error>> {
     let url = if dm {
         format!(
-            "https://api.groupme.com/v3/direct_messages?token={}&recipient_id={}",
+            "https://api.groupme.com/v3/direct_messages?token={}&other_user_id={}",
             secret, id
         )
     } else {
@@ -204,6 +204,7 @@ pub fn send_message(
         ureq::json!({
             "direct_message": {
                 "source_guid": &guid,
+                "recipient_id": id,
                 "text": message,
                 "attachments": []
             }
