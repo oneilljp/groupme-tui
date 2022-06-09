@@ -1,8 +1,6 @@
 use std::error::Error;
 use std::sync::mpsc;
 
-use ureq;
-
 use serde_json::{json, Value};
 
 use tungstenite::{client::AutoStream, connect, protocol::WebSocket, Message};
@@ -32,11 +30,8 @@ static SOUND: &'static str = "Mail";
  * secret: API Key
  */
 pub fn listener(rx: mpsc::Receiver<bool>, user_id: &str, secret: &str) {
-    let mut req_id = 1;
     let mut id: u64 = 1;
 
-    // Build agent for better polling
-    let agent = ureq::AgentBuilder::new().build();
 
     let (mut socket, _) = connect(Url::parse("wss://push.groupme.com/faye").unwrap())
         .expect("Couldn't connect socket");
@@ -102,7 +97,8 @@ fn subscribe(
     let resp_json: Value =
         serde_json::from_str(resp.to_text().unwrap()).expect("Error parsing json");
 
-    let clientId = resp_json.as_array().unwrap()[0]["clientId"]
+
+    let client_id = resp_json.as_array().unwrap()[0]["clientId"]
         .as_str()
         .unwrap();
     let timestamp = Local::now().timestamp().to_string();
@@ -111,7 +107,7 @@ fn subscribe(
     let sub_msg = json!(
     [{
         "channel": "/meta/subscribe",
-        "clientId": clientId,
+        "clientId": client_id,
         "subscription": format!("/user/{}", user_id),
         "id": id.to_string(),
         "ext": {
@@ -121,13 +117,18 @@ fn subscribe(
     }]
     );
 
+    // Write subscription
+    socket
+        .write_message(Message::Text(sub_msg.to_string()))
+        .expect("Error Subscribing");
+    *id += 1;
+
     // Read confirmation message to empty queue
     socket
         .read_message()
         .expect("Error recieving sub confirmation");
-    *id += 1;
 
-    clientId.to_string()
+    client_id.to_string()
 }
 
 /* Poll push notification server once
@@ -153,7 +154,14 @@ fn poll(socket: &mut WebSocket<AutoStream>, client_id: &str, id: &mut u64) -> Re
     if resp.is_text() {
         let msg = resp.to_text().unwrap();
         let poll_json: Value = serde_json::from_str(&msg)?;
+        if poll_json.as_array().unwrap().len() == 1 {
+            return Ok(())
+        }
         let poll_results = poll_json.as_array().unwrap()[1].as_object().unwrap();
+
+        if !poll_results.contains_key("data") || !poll_results["data"].as_object().unwrap().contains_key("alert") {
+            return Ok(())
+        }
         
         let alert = poll_results["data"]["alert"].as_str().unwrap();
         Notification::new()
